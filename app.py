@@ -139,14 +139,20 @@ st.markdown("""
 # Load model and encoder
 @st.cache_resource
 def load_models():
-    """Load saved model and label encoder"""
+    """Load saved model and label encoder, or train one if not found."""
     try:
         model = joblib.load("random_forest_model.pkl")
         le = joblib.load("label_encoder.pkl")
         return model, le
     except FileNotFoundError:
-        st.error("⚠️ Model files not found! Please run `train_model.py` first.")
-        st.stop()
+        # If files are missing (e.g., on Streamlit Cloud), run the training script
+        try:
+            from train_model import train_and_save_model
+            model, le = train_and_save_model()
+            return model, le
+        except Exception as e:
+            st.error(f"⚠️ Error training model: {e}")
+            st.stop()
 
 def predict_performance(model, le, input_data):
     """Make prediction using the trained model"""
